@@ -149,6 +149,7 @@ class MemoryEfficientDistributedWeightedSampler(DistributedSampler):
                 self.dataset_orders.extend([i] * w)
 
             self.drawn_samples = 0
+            self.dataset_drawn_samples = [0] * len(self.dataset_sizes)
 
     def __iter__(self) -> Iterator:
         return self
@@ -187,10 +188,11 @@ class MemoryEfficientDistributedWeightedSampler(DistributedSampler):
                 self.dataset_orders
             )
             selected_dataset_idx = self.dataset_orders[dataset_orders_idx]
-            # Get the sample index in the selected dataset by skipping with the num_replicas * drawn_samples
+            # Advance each dataset independently of the mixture order.
             sample_idx_in_dataset = (
-                self.drawn_samples * self.num_replicas + self.rank
+                self.dataset_drawn_samples[selected_dataset_idx] * self.num_replicas + self.rank
             ) % self.dataset_sizes[selected_dataset_idx]
+            self.dataset_drawn_samples[selected_dataset_idx] += 1
             self.drawn_samples += 1
 
         # Getting the index of the sample in the whole dataset
@@ -298,6 +300,7 @@ class MemoryEfficientDistributedWeightedSamplerLessRepeat(DistributedSampler):
                 self.dataset_orders.extend([i] * w)
 
             self.drawn_samples = 0
+            self.dataset_drawn_samples = [0] * len(self.dataset_sizes)
 
     def __iter__(self) -> Iterator:
         return self
@@ -343,10 +346,11 @@ class MemoryEfficientDistributedWeightedSamplerLessRepeat(DistributedSampler):
                 self.dataset_orders
             )
             selected_dataset_idx = self.dataset_orders[dataset_orders_idx]
-            # Get the sample index in the selected dataset by skipping with the num_replicas * drawn_samples
+            # Advance each dataset independently of the mixture order.
             sample_idx_in_dataset = (
-                self.drawn_samples * self.num_replicas + self.rank
+                self.dataset_drawn_samples[selected_dataset_idx] * self.num_replicas + self.rank
             ) % self.dataset_sizes[selected_dataset_idx]
+            self.dataset_drawn_samples[selected_dataset_idx] += 1
             self.drawn_samples += 1
 
         # Getting the index of the sample in the whole dataset
